@@ -223,3 +223,40 @@ USERS_PAGE_2='{"ok":true,"members":[{"id":"U002","name":"jason","profile":{"disp
   run env SLACK_CLI_TOKEN= "${d}/bin/slk" init --token xoxp-init-test --trace
   [[ "${output}" != *xoxp-init-test* ]]
 }
+
+# --- dependencies -----------------------------------------------------------------------------
+
+# onpath <executable...>: a PATH holding only bash, dirname and the given executables
+function onpath() {
+  local d="${BATS_TEST_TMPDIR}/path" e
+  mkdir -p "${d}"
+  for e in bash dirname "$@"; do ln -sf "$(command -v "${e}")" "${d}/${e}"; done
+  echo "${d}"
+}
+
+@test 'api commands fail with missing_dependency when jq is not on PATH' {
+  run env PATH="$(onpath curl)" "${BATS_TEST_DIRNAME}/../../build/bin/slk" presence away
+  [ "${status}" -eq 1 ]
+  [ "${output}" = '{"ok": false, "error": "missing_dependency", "dependency": "jq"}' ]
+  [ ! -s "${SHIM_DIR}/calls" ]
+}
+
+@test 'api commands fail with missing_dependency when curl is not on PATH' {
+  run env PATH="$(onpath jq)" "${BATS_TEST_DIRNAME}/../../build/bin/slk" presence away
+  [ "${status}" -eq 1 ]
+  [ "${output}" = '{"ok": false, "error": "missing_dependency", "dependency": "curl"}' ]
+}
+
+@test 'init fails with missing_dependency when jq is not on PATH' {
+  run env PATH="$(onpath)" "${BATS_TEST_DIRNAME}/../../build/bin/slk" init --token xoxp-init-test
+  [ "${status}" -eq 1 ]
+  [ "${output}" = '{"ok": false, "error": "missing_dependency", "dependency": "jq"}' ]
+}
+
+@test '--help and --version need neither curl nor jq' {
+  run env PATH="$(onpath)" "${BATS_TEST_DIRNAME}/../../build/bin/slk" --version
+  [ "${status}" -eq 0 ]
+  [ "${output}" = '0.19.0' ]
+  run env PATH="$(onpath)" "${BATS_TEST_DIRNAME}/../../build/bin/slk" --help
+  [ "${status}" -eq 0 ]
+}

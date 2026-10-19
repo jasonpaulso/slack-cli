@@ -263,6 +263,17 @@ function lerror() {
   jqify "$(jq -cn --arg e "${1}" --argjson x "${_extra}" '{ok: false, error: $e} + $x')"
 }
 
+# ldeps <executable...>: print missing_dependency and return 1 unless each executable is on PATH.
+# Plain echo, since jq may be the one missing.
+function ldeps() {
+  local _dep
+  for _dep in "$@"; do
+    command -v "${_dep}" > /dev/null && continue
+    echo "{\"ok\": false, \"error\": \"missing_dependency\", \"dependency\": \"${_dep}\"}"
+    return 1
+  done
+}
+
 # lepoch <when>: epoch seconds for +90m, +2h, HH:MM (next occurrence, local time) or epoch seconds.
 function lepoch() {
   local _now=$(date +%s) _t
@@ -724,13 +735,15 @@ function version() {
 case "${cmd}${sub}" in
   --help|-h) help ; exit 0 ;;
   --version|-v) version ; exit 0 ;;
-  init) init ; exit $? ;;
+  init) ldeps jq || exit 1 ; init ; exit $? ;;
   chatdelete|chatsend|chatupdate|\
   filedelete|fileinfo|filelist|fileupload|\
   presenceactive|presenceaway|\
   reminderadd|remindercomplete|reminderdelete|reminderinfo|reminderlist|\
   snoozeend|snoozeinfo|snoozestart|\
   statusclear|statusedit)
+    ldeps curl jq || exit 1
+
     # ${token:+set} keeps the token itself out of --trace output.
     if [ -z "${token:+set}" ]; then
       echo '{"ok": false, "error": "not_inited"}' |
