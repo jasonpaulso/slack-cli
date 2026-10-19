@@ -153,7 +153,8 @@ while (( "$#" )); do
 done
 
 # TRACING #########################################################################################
-${trace}
+# init handles the raw token at every step, so it is never traced.
+[ "${cmd}" != 'init' ] && ${trace}
 
 # ARGUMENT AND OPTION PROMPTING ###################################################################
 case "${cmd}${sub}" in
@@ -601,7 +602,7 @@ function fileupload() {
 }
 
 function init() {
-  echo "${token}" > "${etcdir}/.slack"
+  ( umask 077 ; printf '%s\n' "${token}" > "${etcdir}/.slack" ) && chmod 600 "${etcdir}/.slack"
 
   case "${?}" in
     0) echo '{"ok": true}' | jq -r ${compact} ${monochrome} "${filter:=.}" ;;

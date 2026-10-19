@@ -205,3 +205,21 @@ USERS_PAGE_2='{"ok":true,"members":[{"id":"U002","name":"jason","profile":{"disp
   [ "$(param 0 ts_from)" = '1700000000' ]
   [ "$(param 0 ts_to)" = '1700000100' ]
 }
+
+# --- init -------------------------------------------------------------------------------------
+
+@test 'init writes the token readable by the owner only, even over an existing file' {
+  d="${BATS_TEST_TMPDIR}/install"
+  make -C "${BATS_TEST_DIRNAME}/../.." install bindir="${d}/bin" etcdir="${d}/etc" >/dev/null
+  printf 'old\n' > "${d}/etc/.slack" && chmod 644 "${d}/etc/.slack"
+  SLACK_CLI_TOKEN= "${d}/bin/slk" init --token xoxp-init-test
+  [ "$(head -1 "${d}/etc/.slack")" = 'xoxp-init-test' ]
+  [ "$(ls -l "${d}/etc/.slack" | cut -c1-10)" = '-rw-------' ]
+}
+
+@test 'init --trace does not print the token' {
+  d="${BATS_TEST_TMPDIR}/install"
+  make -C "${BATS_TEST_DIRNAME}/../.." install bindir="${d}/bin" etcdir="${d}/etc" >/dev/null
+  run env SLACK_CLI_TOKEN= "${d}/bin/slk" init --token xoxp-init-test --trace
+  [[ "${output}" != *xoxp-init-test* ]]
+}
