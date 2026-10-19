@@ -1,5 +1,9 @@
 # Modernization plan
 
+## Status (2026-10-19)
+
+Defects 1-6 fixed in `src/slk` 0.19.0, plus `chat send` JSON quoting, `jqify` glob expansion, and four option-parsing bugs. 32 tests green (`make test`: unit + offline shim). Installed at `~/.local/bin/slk`, token at `~/.config/slk/.slack` (600). Live-checked on Busie with own records, all cleaned up: DM send/update/delete, file upload/info/delete, status edit `--expires` + clear, presence active, snooze info `--user @jason`. Reminders: `add` works, but `info`/`list`/`delete` return `not_found` even via raw curl; Slack-side since Save it for Later, documented, not fixable here.
+
 Fork: `jasonpaulso/slack-cli`, identical to `rockymadden/slack-cli` master (`46d2274`, 2018-11-06; 0 ahead, 0 behind, checked 2026-10-19). Remotes: `origin` = the fork, `upstream` = rockymadden. Upstream is dormant (38 open issues, no commits since 2018), so fixes land here and stay here.
 
 ## Baseline
